@@ -86,9 +86,10 @@ class FetcherViewModel @Inject constructor(
                     html
                 }
                 
+                val currentUrl = _uiState.value.currentUrl
                 val result = withTimeoutOrNull(PARSE_TIMEOUT_MS.milliseconds) {
                     withContext(Dispatchers.Default) {
-                        htmlParserUseCase.parse(safeHtml)
+                        htmlParserUseCase.parse(safeHtml, currentUrl)
                     }
                 } ?: run {
                     Timber.e("Parsing timed out after ${PARSE_TIMEOUT_MS}ms")

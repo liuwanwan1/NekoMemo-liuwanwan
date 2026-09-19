@@ -30,8 +30,11 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.ZoomIn
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -75,6 +78,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlinx.coroutines.launch
 import mirujam.nekomemo.R
+import mirujam.nekomemo.domain.model.QuizPlatform
 import mirujam.nekomemo.navigation.Route
 import mirujam.nekomemo.ui.component.AppTopBar
 import mirujam.nekomemo.ui.component.LocalSnackbarHostState
@@ -108,6 +112,7 @@ fun FetcherScreen(
     var isLoading by rememberSaveable { mutableStateOf(false) }
     var loadProgress by rememberSaveable { mutableIntStateOf(0) }
     var isZoomControlsVisible by rememberSaveable { mutableStateOf(false) }
+    var isPlatformMenuVisible by rememberSaveable { mutableStateOf(false) }
     var zoomPercent by rememberSaveable { mutableIntStateOf(100) }
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = LocalSnackbarHostState.current
@@ -324,6 +329,34 @@ fun FetcherScreen(
                 navigationIcon = Icons.Outlined.Close,
                 onNavigationClick = { onBack() },
                 actions = {
+                    Box {
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(positioning = TooltipAnchorPosition.Below),
+                            tooltip = { PlainTooltip { Text(stringResource(R.string.fetcher_switch_platform)) } },
+                            state = rememberTooltipState()
+                        ) {
+                            IconButton(onClick = { isPlatformMenuVisible = true }) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Public,
+                                    contentDescription = stringResource(R.string.fetcher_switch_platform)
+                                )
+                            }
+                        }
+                        DropdownMenu(
+                            expanded = isPlatformMenuVisible,
+                            onDismissRequest = { isPlatformMenuVisible = false }
+                        ) {
+                            listOf(QuizPlatform.CHAOXING, QuizPlatform.ZHIHUISHU, QuizPlatform.ICOURSE163).forEach { platform ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(platform.displayNameRes)) },
+                                    onClick = {
+                                        isPlatformMenuVisible = false
+                                        webViewRef.webView?.loadUrl(platform.homeUrl)
+                                    }
+                                )
+                            }
+                        }
+                    }
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(positioning = TooltipAnchorPosition.Below),
                         tooltip = { PlainTooltip { Text(stringResource(R.string.fetcher_toggle_zoom_controls)) } },
@@ -426,6 +459,10 @@ fun FetcherScreen(
                                 settings.loadWithOverviewMode = true
                                 settings.useWideViewPort = true
                                 settings.defaultTextEncodingName = "utf-8"
+                                // 加固：本页面仅用于浏览/登录刷题平台网页，不需要访问本机文件或内容
+                                settings.allowFileAccess = false
+                                settings.allowContentAccess = false
+                                settings.safeBrowsingEnabled = true
 
                                 val zhHeaders = mapOf("Accept-Language" to "zh-CN,zh;q=0.9,en;q=0.8")
 

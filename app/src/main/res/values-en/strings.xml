@@ -7,6 +7,8 @@
     <string name="nav_json_import">Import JSON</string>
     <string name="nav_detail">Detail</string>
     <string name="nav_test">Test</string>
+    <string name="nav_wrong_book">Wrong Questions</string>
+    <string name="nav_stats">Stats &amp; History</string>
 
     <!-- Library -->
     <string name="library_no_banks">No question banks yet</string>
@@ -62,6 +64,11 @@
     <string name="fetcher_error_no_questions">No questions found on this page</string>
     <string name="fetcher_error_oom">Error: Out of memory. Page is too complex.</string>
     <string name="fetcher_error_generic">Error: %1$s</string>
+    <string name="fetcher_switch_platform">Switch platform</string>
+    <string name="platform_chaoxing">Chaoxing</string>
+    <string name="platform_zhihuishu">Zhihuishu</string>
+    <string name="platform_icourse163">icourse163 (China MOOC)</string>
+    <string name="platform_other">Other platform</string>
 
     <!-- Extract -->
     <string name="extract_no_questions">No questions found</string>
@@ -167,6 +174,27 @@
         <item quantity="one">%1$d of %2$d correct</item>
         <item quantity="other">%1$d of %2$d correct</item>
     </plurals>
+
+    <!-- Wrong Question Book -->
+    <string name="wrong_book_review_title">Wrong Question Review</string>
+    <string name="wrong_book_empty">No wrong questions yet, keep it up!</string>
+    <string name="wrong_book_start_review">Start Review</string>
+    <string name="wrong_book_mark_mastered">Mark as Mastered</string>
+    <string name="wrong_book_wrong_count">Wrong ×%1$d</string>
+
+    <!-- Practice Stats -->
+    <string name="stats_overview_title">Overview</string>
+    <string name="stats_total_sessions">Sessions</string>
+    <string name="stats_total_answered">Answered</string>
+    <string name="stats_accuracy">Accuracy</string>
+    <string name="stats_wrong_questions">Wrong Questions</string>
+    <string name="stats_mastered_questions">Mastered</string>
+    <string name="stats_history_title">History</string>
+    <string name="stats_history_empty">No practice history yet, start a test!</string>
+    <string name="stats_session_wrong_review">Wrong question review</string>
+    <string name="stats_session_score">%1$d / %2$d (%3$d%%)</string>
+    <string name="settings_wrong_book_entry">Wrong Questions</string>
+    <string name="settings_stats_entry">Stats &amp; History</string>
 
     <!-- Settings -->
     <string name="settings_clear_db_title">Clear Database?</string>

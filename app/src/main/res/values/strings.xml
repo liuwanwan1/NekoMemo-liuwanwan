@@ -8,6 +8,8 @@
     <string name="nav_json_import">从 JSON 导入</string>
     <string name="nav_detail">详情</string>
     <string name="nav_test">测试</string>
+    <string name="nav_wrong_book">错题本</string>
+    <string name="nav_stats">统计与历史</string>
 
     <!-- Library -->
     <string name="library_no_banks">暂无题库</string>
@@ -62,6 +64,11 @@
     <string name="fetcher_error_no_questions">此页面未找到题目</string>
     <string name="fetcher_error_oom">错误：内存不足，页面过于复杂</string>
     <string name="fetcher_error_generic">错误：%1$s</string>
+    <string name="fetcher_switch_platform">切换平台</string>
+    <string name="platform_chaoxing">学习通</string>
+    <string name="platform_zhihuishu">智慧树</string>
+    <string name="platform_icourse163">中国大学 MOOC</string>
+    <string name="platform_other">其他平台</string>
 
     <!-- Extract -->
     <string name="extract_no_questions">未找到题目</string>
@@ -157,6 +164,27 @@
     <plurals name="test_score_summary">
         <item quantity="other">正确率：%1$d / %2$d</item>
     </plurals>
+
+    <!-- Wrong Question Book -->
+    <string name="wrong_book_review_title">错题复习</string>
+    <string name="wrong_book_empty">暂无错题，继续保持喵~</string>
+    <string name="wrong_book_start_review">开始复习</string>
+    <string name="wrong_book_mark_mastered">标为已掌握</string>
+    <string name="wrong_book_wrong_count">错 %1$d 次</string>
+
+    <!-- Practice Stats -->
+    <string name="stats_overview_title">练习概览</string>
+    <string name="stats_total_sessions">练习次数</string>
+    <string name="stats_total_answered">累计答题</string>
+    <string name="stats_accuracy">总正确率</string>
+    <string name="stats_wrong_questions">错题数</string>
+    <string name="stats_mastered_questions">已掌握</string>
+    <string name="stats_history_title">练习历史</string>
+    <string name="stats_history_empty">还没有练习记录，开始一次测试吧喵~</string>
+    <string name="stats_session_wrong_review">错题复习</string>
+    <string name="stats_session_score">%1$d / %2$d（%3$d%%）</string>
+    <string name="settings_wrong_book_entry">错题本</string>
+    <string name="settings_stats_entry">统计与历史</string>
 
     <!-- Settings -->
     <string name="settings_clear_db_title">清空数据库</string>
