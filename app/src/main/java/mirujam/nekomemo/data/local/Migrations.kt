@@ -176,3 +176,39 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_questions_questionBankId` ON `questions` (`questionBankId`)")
     }
 }
+
+/**
+ * Migration from v1.3 (DB version 3) to v1.5 (DB version 4).
+ *
+ * Changes:
+ * - `questions` gains answer-tracking columns for the wrong-question book / mastery
+ *   feature: `correctCount`, `wrongCount`, `consecutiveCorrect` (all INTEGER NOT NULL
+ *   DEFAULT 0) and `lastAnsweredAt` (INTEGER, nullable).
+ * - Adds a new `practice_sessions` table recording each finished test session
+ *   (`questionBankId` nullable FK to `question_banks` ON DELETE SET NULL, so a
+ *   deleted bank keeps its practice history with a null reference; `bankTitleSnapshot`
+ *   preserves a readable label even after the bank is deleted or renamed).
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `questions` ADD COLUMN `correctCount` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `questions` ADD COLUMN `wrongCount` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `questions` ADD COLUMN `consecutiveCorrect` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `questions` ADD COLUMN `lastAnsweredAt` INTEGER")
+
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS `practice_sessions` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `questionBankId` INTEGER,
+                `bankTitleSnapshot` TEXT NOT NULL,
+                `startedAt` INTEGER NOT NULL,
+                `finishedAt` INTEGER NOT NULL,
+                `totalCount` INTEGER NOT NULL,
+                `correctCount` INTEGER NOT NULL,
+                FOREIGN KEY(`questionBankId`) REFERENCES `question_banks`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
+            )
+        """.trimIndent())
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_practice_sessions_questionBankId` ON `practice_sessions` (`questionBankId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_practice_sessions_startedAt` ON `practice_sessions` (`startedAt`)")
+    }
+}

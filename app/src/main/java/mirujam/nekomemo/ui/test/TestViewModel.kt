@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import mirujam.nekomemo.R
 import mirujam.nekomemo.data.preferences.TestPreferenceRepository
+import mirujam.nekomemo.data.repository.PracticeStatsRepository
 import mirujam.nekomemo.data.repository.QuestionRepository
 import mirujam.nekomemo.domain.model.QuestionType
 import mirujam.nekomemo.ui.model.QuestionUiModel
@@ -47,6 +48,7 @@ data class TestUiState(
 class TestViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val repository: QuestionRepository,
+    private val practiceStatsRepository: PracticeStatsRepository,
     testPreferenceRepository: TestPreferenceRepository
 ) : ViewModel() {
 
@@ -54,8 +56,13 @@ class TestViewModel @Inject constructor(
     private val questionCount: Int = savedStateHandle["questionCount"] ?: 0
     private val shuffleQuestions: Boolean = savedStateHandle["shuffleQuestions"] ?: false
     private val shuffleOptions: Boolean = savedStateHandle["shuffleOptions"] ?: false
+    private val wrongOnly: Boolean = savedStateHandle["wrongOnly"] ?: false
+    private var startedAt: Long = System.currentTimeMillis()
+    private var hasRecordedSession = false
 
-    private val rawQuestions: StateFlow<List<QuestionUiModel>> = repository.getQuestionsForBank(bankId)
+    private val questionSource = if (wrongOnly) repository.getWrongQuestions() else repository.getQuestionsForBank(bankId)
+
+    private val rawQuestions: StateFlow<List<QuestionUiModel>> = questionSource
         .map { domainQuestions ->
             val models = QuestionUiModel.fromDomainModels(domainQuestions)
             if (shuffleOptions) {
@@ -85,11 +92,18 @@ class TestViewModel @Inject constructor(
     val uiState: StateFlow<TestUiState> = _uiState.asStateFlow()
 
     private var hasShuffledQuestions = false
+    private var bankTitlePlain: String = ""
 
     init {
-        viewModelScope.launch {
-            val bank = repository.getBankById(bankId)
-            _uiState.update { it.copy(bankTitle = bank?.title?.let(UiText::DynamicString) ?: UiText.StringResource(R.string.test_mode_title)) }
+        if (wrongOnly) {
+            bankTitlePlain = ""
+            _uiState.update { it.copy(bankTitle = UiText.StringResource(R.string.wrong_book_review_title)) }
+        } else {
+            viewModelScope.launch {
+                val bank = repository.getBankById(bankId)
+                bankTitlePlain = bank?.title.orEmpty()
+                _uiState.update { it.copy(bankTitle = bank?.title?.let(UiText::DynamicString) ?: UiText.StringResource(R.string.test_mode_title)) }
+            }
         }
 
         viewModelScope.launch {
@@ -97,7 +111,7 @@ class TestViewModel @Inject constructor(
                 val models = withTimeout(QUESTIONS_LOAD_TIMEOUT_MS.milliseconds) {
                     rawQuestions.first { it.isNotEmpty() }
                 }
-                val finalQuestions = if (shuffleQuestions) models.shuffled() else models
+                val finalQuestions = selectQuestions(models, shuffleQuestions)
                 hasShuffledQuestions = shuffleQuestions
                 _uiState.update { it.copy(isLoading = false, questions = finalQuestions) }
             } catch (e: Exception) {
@@ -159,7 +173,33 @@ class TestViewModel @Inject constructor(
     }
 
     fun finishTest() {
+        val alreadyFinished = _uiState.value.isFinished
         _uiState.update { it.copy(isFinished = true) }
+        if (alreadyFinished || hasRecordedSession) return
+        hasRecordedSession = true
+
+        val questions = _uiState.value.questions
+        val selectedAnswers = _uiState.value.selectedAnswers
+        val score = ScoreModel.calculate(questions, selectedAnswers)
+        val objectiveResults = questions.mapIndexedNotNull { index, question ->
+            if (question.type != QuestionType.SINGLE_CHOICE && question.type != QuestionType.MULTIPLE_CHOICE && question.type != QuestionType.TRUE_FALSE) {
+                return@mapIndexedNotNull null
+            }
+            val selected = selectedAnswers[index] ?: return@mapIndexedNotNull null
+            question.id to (selected == question.correctIndices.toSet())
+        }
+
+        viewModelScope.launch {
+            practiceStatsRepository.recordSession(
+                questionBankId = if (wrongOnly) null else bankId.takeIf { it >= 0 },
+                bankTitleSnapshot = bankTitlePlain,
+                startedAt = startedAt,
+                finishedAt = System.currentTimeMillis(),
+                totalCount = score.total,
+                correctCount = score.correct,
+                objectiveResults = objectiveResults
+            )
+        }
     }
 
     fun startReview() {
@@ -172,8 +212,10 @@ class TestViewModel @Inject constructor(
 
     fun resetTest() {
         autoNextJob?.cancel()
+        hasRecordedSession = false
+        startedAt = System.currentTimeMillis()
         val baseQuestions = rawQuestions.value
-        val finalQuestions = if (hasShuffledQuestions) baseQuestions.shuffled() else baseQuestions
+        val finalQuestions = selectQuestions(baseQuestions, hasShuffledQuestions)
         _uiState.update {
             it.copy(
                 selectedAnswers = emptyMap(),
@@ -188,6 +230,15 @@ class TestViewModel @Inject constructor(
 
     fun calculateScore(questions: List<QuestionUiModel>): ScoreModel {
         return ScoreModel.calculate(questions, _uiState.value.selectedAnswers)
+    }
+
+    /**
+     * 按用户在 TestConfigDialog 中选择的题量截取题目。此前该逻辑缺失，
+     * 导致"自定义题量测试"始终使用全部题目而不是用户选择的数量。
+     */
+    private fun selectQuestions(models: List<QuestionUiModel>, shuffle: Boolean): List<QuestionUiModel> {
+        val shuffled = if (shuffle) models.shuffled() else models
+        return if (questionCount in 1 until shuffled.size) shuffled.take(questionCount) else shuffled
     }
 
     private fun shuffleOptionsForModel(model: QuestionUiModel): QuestionUiModel {

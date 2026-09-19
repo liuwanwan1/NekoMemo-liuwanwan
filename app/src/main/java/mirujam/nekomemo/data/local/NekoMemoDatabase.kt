@@ -4,9 +4,11 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import mirujam.nekomemo.data.local.dao.CategoryDao
+import mirujam.nekomemo.data.local.dao.PracticeSessionDao
 import mirujam.nekomemo.data.local.dao.QuestionBankDao
 import mirujam.nekomemo.data.local.dao.QuestionDao
 import mirujam.nekomemo.data.local.entity.CategoryEntity
+import mirujam.nekomemo.data.local.entity.PracticeSessionEntity
 import mirujam.nekomemo.data.local.entity.QuestionBankEntity
 import mirujam.nekomemo.data.local.entity.QuestionEntity
 
@@ -14,9 +16,10 @@ import mirujam.nekomemo.data.local.entity.QuestionEntity
     entities = [
         QuestionBankEntity::class,
         QuestionEntity::class,
-        CategoryEntity::class
+        CategoryEntity::class,
+        PracticeSessionEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -24,4 +27,5 @@ abstract class NekoMemoDatabase : RoomDatabase() {
     abstract fun questionBankDao(): QuestionBankDao
     abstract fun questionDao(): QuestionDao
     abstract fun categoryDao(): CategoryDao
+    abstract fun practiceSessionDao(): PracticeSessionDao
 }

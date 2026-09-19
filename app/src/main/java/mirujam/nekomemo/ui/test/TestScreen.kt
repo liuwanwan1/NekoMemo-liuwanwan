@@ -63,10 +63,11 @@ import mirujam.nekomemo.ui.theme.ProgressIndicatorShapes
  * 答题测试页面。
  *
  * 导航参数通过 SavedStateHandle 由 TestViewModel 读取：
- * - bankId: Long (必填)
+ * - bankId: Long (必填，wrongOnly=true 时忽略，可传 -1)
  * - questionCount: Int (必填)
  * - shuffleQuestions: Boolean (默认 false)
  * - shuffleOptions: Boolean (默认 false)
+ * - wrongOnly: Boolean (默认 false，为 true 时从错题本（跨题库）加载题目)
  */
 @Composable
 fun TestScreen(

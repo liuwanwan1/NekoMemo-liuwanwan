@@ -25,5 +25,9 @@ data class QuestionEntity(
     val text: String,
     val options: String,
     val correctIndices: String,
-    val type: QuestionType
+    val type: QuestionType,
+    val correctCount: Int = 0,
+    val wrongCount: Int = 0,
+    val consecutiveCorrect: Int = 0,
+    val lastAnsweredAt: Long? = null
 )

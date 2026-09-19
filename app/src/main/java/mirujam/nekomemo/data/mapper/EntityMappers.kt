@@ -3,9 +3,11 @@ package mirujam.nekomemo.data.mapper
 import mirujam.nekomemo.data.local.IntListJsonConverter
 import mirujam.nekomemo.data.local.ListJsonConverter
 import mirujam.nekomemo.data.local.entity.CategoryEntity
+import mirujam.nekomemo.data.local.entity.PracticeSessionEntity
 import mirujam.nekomemo.data.local.entity.QuestionBankEntity
 import mirujam.nekomemo.data.local.entity.QuestionEntity
 import mirujam.nekomemo.domain.model.Category
+import mirujam.nekomemo.domain.model.PracticeSession
 import mirujam.nekomemo.domain.model.Question
 import mirujam.nekomemo.domain.model.QuestionBank
 
@@ -29,7 +31,11 @@ fun QuestionEntity.toDomainModel(): Question = Question(
     text = text,
     options = ListJsonConverter.toStringList(options),
     correctIndices = IntListJsonConverter.toIntList(correctIndices),
-    type = type
+    type = type,
+    correctCount = correctCount,
+    wrongCount = wrongCount,
+    consecutiveCorrect = consecutiveCorrect,
+    lastAnsweredAt = lastAnsweredAt
 )
 
 fun Question.toEntity(): QuestionEntity = QuestionEntity(
@@ -38,7 +44,11 @@ fun Question.toEntity(): QuestionEntity = QuestionEntity(
     text = text,
     options = ListJsonConverter.fromStringList(options),
     correctIndices = IntListJsonConverter.fromIntList(correctIndices),
-    type = type
+    type = type,
+    correctCount = correctCount,
+    wrongCount = wrongCount,
+    consecutiveCorrect = consecutiveCorrect,
+    lastAnsweredAt = lastAnsweredAt
 )
 
 fun List<QuestionBankEntity>.toDomainBankModels(): List<QuestionBank> = map { it.toDomainModel() }
@@ -56,3 +66,15 @@ fun Category.toEntity(): CategoryEntity = CategoryEntity(
 )
 
 fun List<CategoryEntity>.toDomainCategoryModels(): List<Category> = map { it.toDomainModel() }
+
+fun PracticeSessionEntity.toDomainModel(): PracticeSession = PracticeSession(
+    id = id,
+    questionBankId = questionBankId,
+    bankTitleSnapshot = bankTitleSnapshot,
+    startedAt = startedAt,
+    finishedAt = finishedAt,
+    totalCount = totalCount,
+    correctCount = correctCount
+)
+
+fun List<PracticeSessionEntity>.toDomainSessionModels(): List<PracticeSession> = map { it.toDomainModel() }

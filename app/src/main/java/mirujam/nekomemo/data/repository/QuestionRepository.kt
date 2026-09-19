@@ -83,13 +83,54 @@ class QuestionRepository @Inject constructor(
         }
 
     suspend fun updateQuestion(id: Long, questionBankId: Long, text: String, options: List<String>, correctIndices: List<Int>, type: QuestionType) {
-        questionDao.updateQuestion(
-            Question(id, questionBankId, text, options, correctIndices, type).toEntity()
-        )
+        // 保留已有的答题统计（correctCount/wrongCount/consecutiveCorrect/lastAnsweredAt），
+        // 仅编辑题目内容，避免编辑题目时把错题本/掌握度记录清零
+        val existing = questionDao.getQuestionById(id)
+        val entity = Question(id, questionBankId, text, options, correctIndices, type).toEntity().let { updated ->
+            if (existing != null) {
+                updated.copy(
+                    correctCount = existing.correctCount,
+                    wrongCount = existing.wrongCount,
+                    consecutiveCorrect = existing.consecutiveCorrect,
+                    lastAnsweredAt = existing.lastAnsweredAt
+                )
+            } else {
+                updated
+            }
+        }
+        questionDao.updateQuestion(entity)
     }
 
     suspend fun deleteQuestion(question: Question) =
         questionDao.deleteQuestion(question.toEntity())
+
+    /** 错题本：所有答错次数 > 0 的题目（跨题库） */
+    fun getWrongQuestions(): Flow<List<Question>> =
+        questionDao.getWrongQuestions().map { it.toDomainQuestionModels() }
+
+    fun getWrongQuestionsForBank(bankId: Long): Flow<List<Question>> =
+        questionDao.getWrongQuestionsForBank(bankId).map { it.toDomainQuestionModels() }
+
+    fun getWrongQuestionCount(): Flow<Int> = questionDao.getWrongQuestionCount()
+
+    fun getMasteredQuestionCount(): Flow<Int> = questionDao.getMasteredQuestionCount(Question.MASTERY_THRESHOLD)
+
+    /** 手动标记为已掌握 / 移出错题本 */
+    suspend fun markQuestionAsMastered(id: Long) = questionDao.markAsMastered(id, Question.MASTERY_THRESHOLD)
+
+    /** 记录一批题目的答题结果（正确/错误），用于测试完成后更新错题本与掌握度统计 */
+    suspend fun recordAnswers(results: List<Pair<Long, Boolean>>, answeredAt: Long = System.currentTimeMillis()) {
+        if (results.isEmpty()) return
+        database.withTransaction {
+            results.forEach { (questionId, isCorrect) ->
+                if (isCorrect) {
+                    questionDao.recordCorrectAnswer(questionId, answeredAt)
+                } else {
+                    questionDao.recordWrongAnswer(questionId, answeredAt)
+                }
+            }
+        }
+    }
 
     suspend fun deleteAllData() = database.withTransaction {
         questionDao.deleteAll()
@@ -108,7 +149,19 @@ class QuestionRepository @Inject constructor(
             )
             val questions = questionDao.getQuestionsForBankSync(bankId)
             if (questions.isNotEmpty()) {
-                questionDao.insertAll(questions.map { it.copy(id = 0, questionBankId = newBankId) })
+                // 复制出的题库是全新的练习记录，不继承原题库的错题/掌握度统计
+                questionDao.insertAll(
+                    questions.map {
+                        it.copy(
+                            id = 0,
+                            questionBankId = newBankId,
+                            correctCount = 0,
+                            wrongCount = 0,
+                            consecutiveCorrect = 0,
+                            lastAnsweredAt = null
+                        )
+                    }
+                )
             }
             newBankId
         }

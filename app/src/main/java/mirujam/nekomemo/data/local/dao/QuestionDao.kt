@@ -70,4 +70,33 @@ interface QuestionDao {
 
     @Query("SELECT questionBankId, COUNT(*) as count FROM questions GROUP BY questionBankId")
     fun getQuestionCountsByBank(): Flow<List<QuestionCountByBank>>
+
+    /** 错题本：所有答错次数 > 0 的题目，最近答错的排在前面 */
+    @Query("SELECT * FROM questions WHERE wrongCount > 0 ORDER BY lastAnsweredAt DESC")
+    fun getWrongQuestions(): Flow<List<QuestionEntity>>
+
+    @Query("SELECT * FROM questions WHERE questionBankId = :bankId AND wrongCount > 0 ORDER BY lastAnsweredAt DESC")
+    fun getWrongQuestionsForBank(bankId: Long): Flow<List<QuestionEntity>>
+
+    @Query("SELECT COUNT(*) FROM questions WHERE wrongCount > 0")
+    fun getWrongQuestionCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM questions WHERE consecutiveCorrect >= :threshold")
+    fun getMasteredQuestionCount(threshold: Int): Flow<Int>
+
+    @Query(
+        "UPDATE questions SET correctCount = correctCount + 1, consecutiveCorrect = consecutiveCorrect + 1, " +
+            "lastAnsweredAt = :answeredAt WHERE id = :id"
+    )
+    suspend fun recordCorrectAnswer(id: Long, answeredAt: Long)
+
+    @Query(
+        "UPDATE questions SET wrongCount = wrongCount + 1, consecutiveCorrect = 0, " +
+            "lastAnsweredAt = :answeredAt WHERE id = :id"
+    )
+    suspend fun recordWrongAnswer(id: Long, answeredAt: Long)
+
+    /** 手动标记为已掌握 / 移出错题本 */
+    @Query("UPDATE questions SET wrongCount = 0, consecutiveCorrect = :threshold WHERE id = :id")
+    suspend fun markAsMastered(id: Long, threshold: Int)
 }
