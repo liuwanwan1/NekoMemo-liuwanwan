@@ -107,7 +107,7 @@ class GenericHeuristicParser : QuestionBankParser {
                     answerRaw = answerMatch.groupValues[2].trim()
                 }
                 optionMatch != null && answerRaw == null -> {
-                    optionLines.add(optionMatch.groupValues[1].uppercaseChar() to optionMatch.groupValues[2].trim())
+                    optionLines.add(optionMatch.groupValues[1][0].uppercaseChar() to optionMatch.groupValues[2].trim())
                 }
                 answerRaw == null -> {
                     stemLines.add(line)
