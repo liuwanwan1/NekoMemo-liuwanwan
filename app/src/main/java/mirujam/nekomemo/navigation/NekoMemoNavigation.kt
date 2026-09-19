@@ -37,7 +37,9 @@ import mirujam.nekomemo.ui.fetcher.FetcherScreen
 import mirujam.nekomemo.ui.jsonimport.JsonImportScreen
 import mirujam.nekomemo.ui.library.LibraryScreen
 import mirujam.nekomemo.ui.settings.SettingsScreen
+import mirujam.nekomemo.ui.stats.StatsScreen
 import mirujam.nekomemo.ui.test.TestScreen
+import mirujam.nekomemo.ui.wrongbook.WrongQuestionsScreen
 
 private val TOP_LEVEL_ROUTES = setOf(Route.Library.route, Route.Settings.route)
 
@@ -213,7 +215,35 @@ fun NekoMemoNavigation(
         }
 
         composable(Route.Settings.route) {
-            SettingsScreen()
+            SettingsScreen(
+                onNavigateToWrongBook = {
+                    navController.navigate(Route.WrongBook.route) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToStats = {
+                    navController.navigate(Route.Stats.route) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(Route.WrongBook.route) {
+            WrongQuestionsScreen(
+                onBack = { navController.popBackStack() },
+                onStartReview = { count ->
+                    navController.navigate(Route.Test.createRoute(bankId = -1, questionCount = count, wrongOnly = true)) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(Route.Stats.route) {
+            StatsScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Route.Fetcher.route) {
@@ -266,7 +296,8 @@ fun NekoMemoNavigation(
                 navArgument("bankId") { type = NavType.LongType },
                 navArgument("questionCount") { type = NavType.IntType },
                 navArgument("shuffleQuestions") { type = NavType.BoolType; defaultValue = false },
-                navArgument("shuffleOptions") { type = NavType.BoolType; defaultValue = false }
+                navArgument("shuffleOptions") { type = NavType.BoolType; defaultValue = false },
+                navArgument("wrongOnly") { type = NavType.BoolType; defaultValue = false }
             )
         ) {
             TestScreen(

@@ -95,6 +95,8 @@ import mirujam.nekomemo.util.clearWebViewData
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun SettingsScreen(
+    onNavigateToWrongBook: () -> Unit = {},
+    onNavigateToStats: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     var showClearDialog by remember { mutableStateOf(false) }
@@ -290,6 +292,11 @@ fun SettingsScreen(
             StatisticsCard(
                 bankCount = bankCount,
                 totalQuestionCount = totalQuestionCount
+            )
+
+            PracticeInsightsCard(
+                onNavigateToWrongBook = onNavigateToWrongBook,
+                onNavigateToStats = onNavigateToStats
             )
 
             val onAddClick = remember { { showAddCategoryDialog = true } }
@@ -585,6 +592,63 @@ private fun StatisticsCard(
                 modifier = Modifier.weight(1f)
             )
         }
+    }
+}
+
+@Composable
+private fun PracticeInsightsCard(
+    onNavigateToWrongBook: () -> Unit,
+    onNavigateToStats: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    SettingsCard(
+        title = stringResource(R.string.nav_stats),
+        icon = Icons.Outlined.QueryStats,
+        modifier = modifier
+    ) {
+        Column {
+            SettingsNavRow(
+                text = stringResource(R.string.settings_wrong_book_entry),
+                onClick = onNavigateToWrongBook
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
+            SettingsNavRow(
+                text = stringResource(R.string.settings_stats_entry),
+                onClick = onNavigateToStats
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+    }
+}
+
+@Composable
+private fun SettingsNavRow(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = false,
+                role = Role.Button,
+                onValueChange = { onClick() }
+            )
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Outlined.NavigateNext,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
